@@ -31,12 +31,14 @@ make hint
 make verify
 ```
 
-## What’s deployed
+## What's deployed
 
 - Namespace: kbox
 - App: nginx-unprivileged behind a ClusterIP Service
 - A busybox pod net-debug for testing in-cluster connectivity
 - A PVC (sometimes relevant)
+
+## How it works
 
 The generator injects 1–3 faults depending on difficulty. Examples:
 

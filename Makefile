@@ -7,6 +7,17 @@ DIFFICULTY ?= easy   # easy|medium|hard
 
 .PHONY: setup cluster delete-cluster challenge status hint verify reset clean cilium
 
+doctor:
+	@echo "Repo root: $$(pwd)"
+	@echo "Checking venv + PyYAML…"
+	@python3 -V
+	@test -d .venv || echo "NOTE: .venv missing (run: make setup)"
+	@.venv/bin/python -c "import yaml; print('PyYAML OK')" 2>/dev/null || echo "PyYAML missing (run: make setup)"
+	@echo "Files present?"
+	@ls -lah tools/ challenges/templates/ | sed 's/^/  /'
+	@echo "Rendered contents:"
+	@ls -lah challenges/rendered/ | sed 's/^/  /' || true
+
 setup:
 	test -d .venv || python3 -m venv .venv
 	$(PIP) install -U pip >/dev/null
@@ -30,6 +41,10 @@ status:
 	$(KUBECTL) -n kbox get pods,svc,ep
 	@echo; echo "Events (last 60s):"; \
 	$(KUBECTL) -n kbox get events --sort-by=.lastTimestamp | tail -n 50 || true
+
+brief:
+	@test -f challenges/rendered/BRIEF.md && cat challenges/rendered/BRIEF.md || \
+	( echo "No brief found. Run 'make challenge' first."; exit 1 )
 
 hint:
 	bash hack/hints.sh
