@@ -1,0 +1,14 @@
+# Python
+.venv/
+__pycache__/
+
+# Generated manifests
+challenges/rendered/*
+
+# OS / editor junk
+.DS_Store
+.vscode/
+
+# env and secrets
+.env
+.env.local
