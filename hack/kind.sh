@@ -8,10 +8,8 @@ CMD=${1:-up}
 if [[ "$CMD" == "up" ]]; then
   if kind get clusters | grep -q "^${KIND_CLUSTER_NAME}$"; then
     echo "kind cluster '${KIND_CLUSTER_NAME}' already exists."
-    exit 0
-  fi
-
-  cat <<EOF | kind create cluster --name "${KIND_CLUSTER_NAME}" --config=-
+  else
+    cat <<EOF | kind create cluster --name "${KIND_CLUSTER_NAME}" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
@@ -19,9 +17,13 @@ nodes:
 - role: worker
 - role: worker
 EOF
+    kubectl wait --for=condition=Ready node --all --timeout=90s
+    echo "Cluster '${KIND_CLUSTER_NAME}' is ready."
+  fi
 
-  kubectl wait --for=condition=Ready node --all --timeout=90s
-  echo "Cluster '${KIND_CLUSTER_NAME}' is ready."
+  # Ensure a default StorageClass exists (local-path)
+  kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml >/dev/null
+  kubectl annotate sc local-path storageclass.kubernetes.io/is-default-class=true --overwrite >/dev/null || true
   exit 0
 fi
 

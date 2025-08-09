@@ -49,3 +49,12 @@ make reset        # resets only the kbox namespace (keep cluster)
 # or
 make clean        # deletes the kind cluster
 ```
+
+## Pre-commit hooks
+
+```bash
+# optional
+pipx install pre-commit || pip install pre-commit
+pre-commit install
+pre-commit run --all-files
+```

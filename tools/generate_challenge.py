@@ -41,10 +41,6 @@ def fault_default_deny_network_policy(ns_doc, deploy_doc, svc_doc):
     ydump(np, OUT / "np.yaml")
     return deploy_doc, svc_doc
 
-def fault_pvc_unknown_storageclass(pvc_doc):
-    pvc_doc.setdefault("spec", {})["storageClassName"] = "fast"
-    return pvc_doc
-
 def fault_env_config_missing_key(deploy_doc):
     cnt = deploy_doc["spec"]["template"]["spec"]["containers"][0]
     cnt.setdefault("env", []).append({
@@ -53,13 +49,20 @@ def fault_env_config_missing_key(deploy_doc):
     })
     return deploy_doc
 
+def fault_claimref_mismatch_in_deployment(deploy_doc):
+    vols = deploy_doc["spec"]["template"]["spec"]["volumes"]
+    for v in vols:
+        if v.get("name") == "webroot" and "persistentVolumeClaim" in v:
+            v["persistentVolumeClaim"]["claimName"] = "app-pvcc"  # subtle typo
+    return deploy_doc
+
 FAULTS = {
     "svc_selector_mismatch": fault_service_selector_mismatch,
-    "bad_readiness_probe": fault_bad_readiness_probe,
-    "targetport_mismatch": fault_targetport_mismatch,
-    "default_deny_np": fault_default_deny_network_policy,
-    "pvc_unknown_sc": fault_pvc_unknown_storageclass,
-    "env_missing_key": fault_env_config_missing_key,
+    "bad_readiness_probe":   fault_bad_readiness_probe,
+    "targetport_mismatch":   fault_targetport_mismatch,
+    "default_deny_np":       fault_default_deny_network_policy,
+    "claimref_mismatch":     fault_claimref_mismatch_in_deployment,
+    "env_missing_key":       fault_env_config_missing_key,
 }
 
 OBJECTIVES = {
@@ -67,7 +70,7 @@ OBJECTIVES = {
     "targetport_mismatch":   "- From `net-debug`, HTTP GET to `app.kbox.svc.cluster.local:80` should return **200 OK**.",
     "bad_readiness_probe":   "- All Pods for `app` reach **Ready** (readiness probe passes).",
     "default_deny_np":       "- In-cluster traffic from `net-debug` to `app:80` must **succeed** (no timeouts).",
-    "pvc_unknown_sc":        "- PVC `app-pvc` should be in **Bound** state.",
+    "claimref_mismatch":     "- Pods should **mount** the PVC successfully (no MountVolume errors).",
     "env_missing_key":       "- The `app` container should **start** without CrashLoopBackOff due to missing env/config.",
 }
 
@@ -103,6 +106,7 @@ def write_brief(seed, difficulty, chosen):
     for key in chosen:
         lines.append(OBJECTIVES[key])
     lines += [
+        "- `kubectl get pvc -n kbox` shows **Bound** for `app-pvc`.",
         "- `kubectl get pods -n kbox` shows Pods **Ready**.",
         "- `kubectl get svc,ep -n kbox` shows **endpoints** for `app`.",
         "- From `net-debug`, `wget -qO- app.kbox.svc.cluster.local/health` returns **200 OK** (or `/`).",
@@ -110,7 +114,7 @@ def write_brief(seed, difficulty, chosen):
         "## Hints (optional)",
         "- Compare labels and selectors between Deployment and Service.",
         "- Verify `targetPort` vs containerPort.",
-        "- Check Events for probe failures or PVC binding issues.",
+        "- Check Events for probe or volume mount failures.",
         "- If traffic times out, consider NetworkPolicies.",
         "- Use `kubectl exec -n kbox -it net-debug -- sh` to curl/wget the service.",
     ]
@@ -123,6 +127,7 @@ def main():
     args = ap.parse_args()
     rng = random.Random(args.seed)
 
+    # reset render dir
     for f in OUT.glob("*"): f.unlink()
 
     copy_base()
@@ -133,12 +138,18 @@ def main():
 
     chosen = pick_faults(args.difficulty, rng)
     for key in chosen:
-        if key == "pvc_unknown_sc": pvc = fault_pvc_unknown_storageclass(pvc)
-        elif key == "env_missing_key": deploy = fault_env_config_missing_key(deploy)
-        elif key == "default_deny_np": deploy, svc = fault_default_deny_network_policy(ns, deploy, svc)
-        elif key == "svc_selector_mismatch": deploy, svc = fault_service_selector_mismatch(deploy, svc)
-        elif key == "bad_readiness_probe": deploy, svc = fault_bad_readiness_probe(deploy, svc)
-        elif key == "targetport_mismatch": deploy, svc = fault_targetport_mismatch(deploy, svc)
+        if key == "env_missing_key":
+            deploy = fault_env_config_missing_key(deploy)
+        elif key == "default_deny_np":
+            deploy, svc = fault_default_deny_network_policy(ns, deploy, svc)
+        elif key == "svc_selector_mismatch":
+            deploy, svc = fault_service_selector_mismatch(deploy, svc)
+        elif key == "bad_readiness_probe":
+            deploy, svc = fault_bad_readiness_probe(deploy, svc)
+        elif key == "targetport_mismatch":
+            deploy, svc = fault_targetport_mismatch(deploy, svc)
+        elif key == "claimref_mismatch":
+            deploy = fault_claimref_mismatch_in_deployment(deploy)
 
     ydump(ns, OUT/"ns.yaml")
     ydump(pvc, OUT/"pvc.yaml")

@@ -15,3 +15,8 @@ challenges/rendered/*
 
 teacher/
 .teacher/
+
+challenges/rendered/*
+*.zip
+evidence-*.txt
+submission-*.zip

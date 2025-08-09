@@ -10,6 +10,7 @@ Spin up a local kind cluster and get a **random broken app** to fix. No spoilers
 - Python 3.9+
 
 ## Quickstart
+
 ```bash
 # one-time
 make setup
@@ -20,6 +21,9 @@ make cluster
 # generate + deploy a randomised challenge
 # DIFFICULTY: easy|medium|hard, SEED optional (shareable)
 make challenge DIFFICULTY=medium SEED=424242
+make challenge DIFFICULTY=easy SEED=424091
+# or random
+make challenge
 
 # read the scenario brief (symptoms, acceptance criteria)
 make brief
@@ -32,6 +36,16 @@ make hint
 
 # after you've fixed things, verify:
 make verify
+
+## if you haven't solved it still, you can see the answers
+```
+
+## To submit your solution (with evidence)
+
+```bash
+make submit
+
+# Then send your zip.
 ```
 
 ## What's deployed
@@ -90,3 +104,11 @@ make clean          # delete the kind cluster and render dir
 
 - Random seed lets instructors reproduce a scenario (SEED=12345).
 - No solutions are printed; only optional generic hints.
+
+
+## Still stuck?
+
+```bash
+I_AM_TEACHER=yes make answers SEED=424091 DIFFICULTY=medium
+cat .teacher/answers-424242.md
+```
