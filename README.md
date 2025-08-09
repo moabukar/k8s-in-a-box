@@ -1,6 +1,6 @@
 # K8s in a Box
 
-Spin up a local kind cluster and get a **random broken app** to fix. No spoilers. Use your K8s skills to diagnose and repair.
+Spin up a local Kubernetes (kind) cluster and get a **random broken app** to fix. No spoilers. Use your K8s, Linux, and networking skills to diagnose and repair.
 
 ## Prereqs
 
