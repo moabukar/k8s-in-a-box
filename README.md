@@ -1,0 +1,87 @@
+# K8s in a Box
+
+Spin up a local kind cluster and get a **random broken app** to fix. No spoilers. Use your K8s skills to diagnose and repair.
+
+## Prereqs
+
+- Docker
+- kind (`brew install kind` or see docs)
+- kubectl (`brew install kubernetes-cli`)
+- Python 3.9+
+
+## Quickstart
+```bash
+# one time
+make setup
+
+# create cluster
+make cluster
+
+# generate + deploy a randomised challenge
+# DIFFICULTY: easy|medium|hard, SEED optional (shareable to reproduce)
+make challenge DIFFICULTY=medium SEED=424242
+
+# see what's up
+make status
+
+# (optional) get a nudge without revealing answers
+make hint
+
+# after you've fixed things, verify:
+make verify
+```
+
+## What’s deployed
+
+- Namespace: kbox
+- App: nginx-unprivileged behind a ClusterIP Service
+- A busybox pod net-debug for testing in-cluster connectivity
+- A PVC (sometimes relevant)
+
+The generator injects 1–3 faults depending on difficulty. Examples:
+
+- Service selector mismatch (no endpoints)
+
+- Service targetPort mismatch
+
+- Bad readiness probe path/timing
+
+- Default-deny NetworkPolicy
+
+- PVC won’t bind
+
+- Missing ConfigMap key reference
+
+You are not told which faults were used. Work the problem:
+
+- `kubectl get pods,svc,ep -n kbox`
+
+- `kubectl describe pod/DEPLOYMENT -n kbox`
+
+- `kubectl logs ...`
+
+- `kubectl exec -n kbox -it net-debug -- sh then wget -qO- app.kbox.svc.cluster.local`
+
+- `kubectl get events -n kbox --sort-by=.lastTimestamp`
+
+## Clean up
+
+```bash
+make reset          # delete only the kbox namespace
+make clean          # delete the kind cluster and render dir
+```
+
+## Troubleshooting
+
+- Pods Pending → Read events; PVC binding; node taints.
+
+- Service has no Endpoints → Labels/selectors mismatch.
+
+- Readiness failing → Probe path/port; timing; 404 vs 200.
+
+- No traffic → NetworkPolicy default-deny? DNS? Use net-debug.
+
+## Notes
+
+- Random seed lets instructors reproduce a scenario (SEED=12345).
+- No solutions are printed; only optional generic hints.
