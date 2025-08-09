@@ -1,22 +1,31 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: app
   namespace: kbox
-  labels: { app: app }
+  labels:
+    app: app
 spec:
   replicas: 2
   selector:
-    matchLabels: { app: app }
+    matchLabels:
+      app: app
   template:
     metadata:
-      labels: { app: app }
+      labels:
+        app: app
     spec:
-      # Seed webroot so readiness has content to serve
       initContainers:
         - name: init-web
           image: busybox:1.36
-          command: ['sh','-c','mkdir -p /work && echo ok >/work/index.html && echo ok >/work/health']
+          command:
+            - sh
+            - -c
+            - >
+              mkdir -p /work &&
+              echo ok >/work/index.html &&
+              echo ok >/work/health
           volumeMounts:
             - name: webroot
               mountPath: /work
@@ -28,12 +37,12 @@ spec:
               containerPort: 8080
           readinessProbe:
             httpGet:
-              path: /health 
+              path: /health
               port: 8080
             initialDelaySeconds: 2
             periodSeconds: 5
           livenessProbe:
-            tcpSocket:                    
+            tcpSocket:
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
@@ -42,7 +51,7 @@ spec:
               mountPath: /usr/share/nginx/html
           securityContext:
             runAsNonRoot: true
-            runAsUser: 101              
+            runAsUser: 101
       volumes:
         - name: webroot
           persistentVolumeClaim:

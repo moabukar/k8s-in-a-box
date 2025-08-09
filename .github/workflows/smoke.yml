@@ -1,44 +1,44 @@
+---
 name: smoke
-on:
+"on":
   push:
+    branches:
+      - main
   pull_request:
-
+    branches:
+      - main
 jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Install deps
-        run: |
+      - run: |
           python -m venv .venv
           .venv/bin/pip install -U pip
           .venv/bin/pip install -r requirements.txt
-
-      - name: Install kind & kubectl
+      - name: Start kind
         uses: helm/kind-action@v1
         with:
           cluster_name: kbox
           node_image: kindest/node:v1.29.2
-
+      - name: Ensure default SC
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/rancher/\
+          local-path-provisioner/master/deploy/local-path-storage.yaml
+          kubectl annotate sc local-path \
+          storageclass.kubernetes.io/is-default-class=true --overwrite
       - name: Render scenario
-        run: .venv/bin/python tools/generate_challenge.py --seed 101 --difficulty easy
-
-      - name: Apply manifests (smoke)
+        run: >
+          .venv/bin/python tools/generate_challenge.py
+          --seed 101 --difficulty easy
+      - name: Apply manifests
         run: |
           kubectl apply -f challenges/rendered/ns.yaml
-          kubectl apply -f challenges/rendered/pvc.yaml || true
-          kubectl apply -f challenges/rendered/app-deploy.yaml
+          kubectl apply -f challenges/rendered/pvc.yaml
           kubectl apply -f challenges/rendered/app-svc.yaml
+          kubectl apply -f challenges/rendered/app-deploy.yaml
           kubectl apply -f challenges/rendered/busybox.yaml
-
-      - name: Artifacts (rendered)
-        uses: actions/upload-artifact@v4
-        with:
-          name: rendered
-          path: challenges/rendered/

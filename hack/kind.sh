@@ -21,10 +21,15 @@ EOF
     echo "Cluster '${KIND_CLUSTER_NAME}' is ready."
   fi
 
-  # Ensure a default StorageClass exists (local-path)
-  kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml >/dev/null
-  kubectl annotate sc local-path storageclass.kubernetes.io/is-default-class=true --overwrite >/dev/null || true
-  exit 0
+# Ensure local-path SC exists and is the ONLY default
+kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml >/dev/null
+# remove default annotation from any existing SCs
+for sc in $(kubectl get sc -o name | sed 's/storageclass.storage.k8s.io\///'); do
+  kubectl annotate sc "$sc" storageclass.kubernetes.io/is-default-class- >/dev/null 2>&1 || true
+done
+# set local-path as default
+kubectl annotate sc local-path storageclass.kubernetes.io/is-default-class=true --overwrite >/dev/null
+
 fi
 
 if [[ "$CMD" == "down" ]]; then

@@ -1,13 +1,16 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: app
   namespace: kbox
-  labels: { app: app }
+  labels:
+    app: app
 spec:
-  selector: { app: app }
+  selector:
+    app: app
   ports:
     - name: http
-      port: 80            # cluster-internal port
+      port: 80
       protocol: TCP
-      targetPort: 8080    # pod listens on 8080 (nginx-unprivileged)
+      targetPort: 8080

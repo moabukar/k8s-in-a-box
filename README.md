@@ -36,7 +36,7 @@ make hint
 
 # after you've fixed things, verify:
 make verify
-## if all checks pass, you can submit your solution. 
+## if all checks pass, you can submit your solution.
 ```
 
 ## To submit your solution (with evidence)
