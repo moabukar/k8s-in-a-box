@@ -40,7 +40,7 @@ make verify
 
 - `make verify:`
   - Initially may FAIL on step [2/4] Pods Ready? or [3/4] Service has endpoints? etc.
-  - Once fixed → ✅ Verification passed.
+  - Once fixed → Verification passed.
 
 ## Clean up
 
