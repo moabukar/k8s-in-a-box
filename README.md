@@ -90,10 +90,10 @@ make clean          # delete the kind cluster and render dir
 
 ## if it gets stuck
 
-# 1. Delete the namespace
+### Delete the namespace
 kubectl delete ns kbox --grace-period=0 --force
 
-# 2. If it gets stuck in "Terminating", patch finalizers
+### If it gets stuck in "Terminating", patch finalizers
 kubectl get ns kbox -o json | \
 jq '.spec.finalizers=[]' | \
 kubectl replace --raw /api/v1/namespaces/kbox/finalize -f -
