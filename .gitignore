@@ -12,3 +12,5 @@ challenges/rendered/*
 # env and secrets
 .env
 .env.local
+
+teacher/
