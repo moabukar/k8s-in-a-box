@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 declare -a HINTS=(
@@ -8,7 +9,7 @@ declare -a HINTS=(
   "Describe the Pod and inspect Events for failing probes or mounts."
   "PVC pending? Verify storageClassName and capacity; check 'describe pvc'."
   "NetworkPolicy may be denying traffic. Is there a default-deny?"
-  "Exec into busybox and curl the service DNS name. What error do you get?"
+  "Exec into net-debug and curl the service DNS name. What error do you get?"
   "Service endpoints: 'kubectl get ep' — do they exist and match Pod labels?"
 )
 

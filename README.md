@@ -11,15 +11,18 @@ Spin up a local kind cluster and get a **random broken app** to fix. No spoilers
 
 ## Quickstart
 ```bash
-# one time
+# one-time
 make setup
 
 # create cluster
 make cluster
 
 # generate + deploy a randomised challenge
-# DIFFICULTY: easy|medium|hard, SEED optional (shareable to reproduce)
+# DIFFICULTY: easy|medium|hard, SEED optional (shareable)
 make challenge DIFFICULTY=medium SEED=424242
+
+# read the scenario brief (symptoms, acceptance criteria)
+make brief
 
 # see what's up
 make status

@@ -17,18 +17,18 @@ def copy_base():
 
 # ---- Fault injections (no stdout leaks) ----
 def fault_service_selector_mismatch(deploy_doc, svc_doc):
-    svc_doc["spec"]["selector"]["app"] = "appp"  # subtle typo
+    svc_doc["spec"]["selector"]["app"] = "appp"
     return deploy_doc, svc_doc
 
 def fault_bad_readiness_probe(deploy_doc, svc_doc):
     cnt = deploy_doc["spec"]["template"]["spec"]["containers"][0]
-    cnt["readinessProbe"]["httpGet"]["path"] = "/readyz"  # 404 on nginx
+    cnt["readinessProbe"]["httpGet"]["path"] = "/readyz"
     cnt["readinessProbe"]["initialDelaySeconds"] = 0
     cnt["readinessProbe"]["periodSeconds"] = 2
     return deploy_doc, svc_doc
 
 def fault_targetport_mismatch(deploy_doc, svc_doc):
-    svc_doc["spec"]["ports"][0]["targetPort"] = 8080  # container listens on 80
+    svc_doc["spec"]["ports"][0]["targetPort"] = 8080
     return deploy_doc, svc_doc
 
 def fault_default_deny_network_policy(ns_doc, deploy_doc, svc_doc):
@@ -42,7 +42,7 @@ def fault_default_deny_network_policy(ns_doc, deploy_doc, svc_doc):
     return deploy_doc, svc_doc
 
 def fault_pvc_unknown_storageclass(pvc_doc):
-    pvc_doc.setdefault("spec", {})["storageClassName"] = "fast"  # kind has none
+    pvc_doc.setdefault("spec", {})["storageClassName"] = "fast"
     return pvc_doc
 
 def fault_env_config_missing_key(deploy_doc):
@@ -62,7 +62,6 @@ FAULTS = {
     "env_missing_key": fault_env_config_missing_key,
 }
 
-# Objectives per fault (student-facing, no spoilers of root-cause)
 OBJECTIVES = {
     "svc_selector_mismatch": "- Ensure the **Service** exposes at least 1 endpoint (check `kubectl get ep`).",
     "targetport_mismatch":   "- From `net-debug`, HTTP GET to `app.kbox.svc.cluster.local:80` should return **200 OK**.",
@@ -101,19 +100,17 @@ def write_brief(seed, difficulty, chosen):
         "",
         "## Acceptance Criteria",
     ]
-    # Map chosen faults to symptom-based objectives
     for key in chosen:
         lines.append(OBJECTIVES[key])
-    # Always include a couple of generic checks
     lines += [
         "- `kubectl get pods -n kbox` shows Pods **Ready**.",
         "- `kubectl get svc,ep -n kbox` shows **endpoints** for `app`.",
-        "- From `net-debug`, `wget -qO- app.kbox.svc.cluster.local/health` returns **200 OK**.",
+        "- From `net-debug`, `wget -qO- app.kbox.svc.cluster.local/health` returns **200 OK** (or `/`).",
         "",
         "## Hints (optional)",
         "- Compare labels and selectors between Deployment and Service.",
         "- Verify `targetPort` vs containerPort.",
-        "- Read Events for probe failures or PVC binding issues.",
+        "- Check Events for probe failures or PVC binding issues.",
         "- If traffic times out, consider NetworkPolicies.",
         "- Use `kubectl exec -n kbox -it net-debug -- sh` to curl/wget the service.",
     ]
@@ -126,7 +123,6 @@ def main():
     args = ap.parse_args()
     rng = random.Random(args.seed)
 
-    # reset render dir
     for f in OUT.glob("*"): f.unlink()
 
     copy_base()
@@ -144,11 +140,12 @@ def main():
         elif key == "bad_readiness_probe": deploy, svc = fault_bad_readiness_probe(deploy, svc)
         elif key == "targetport_mismatch": deploy, svc = fault_targetport_mismatch(deploy, svc)
 
-    ydump(ns, OUT/"ns.yaml"); ydump(pvc, OUT/"pvc.yaml"); ydump(deploy, OUT/"app-deploy.yaml"); ydump(svc, OUT/"app-svc.yaml")
+    ydump(ns, OUT/"ns.yaml")
+    ydump(pvc, OUT/"pvc.yaml")
+    ydump(deploy, OUT/"app-deploy.yaml")
+    ydump(svc, OUT/"app-svc.yaml")
 
-    # student brief (symptoms-based)
     write_brief(args.seed, args.difficulty, chosen)
-
     print(f"Challenge generated with seed {args.seed} at difficulty '{args.difficulty}'.")
     print("Manifests + BRIEF written to challenges/rendered/.")
 

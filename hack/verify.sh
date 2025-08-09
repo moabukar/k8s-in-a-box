@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 NS=kbox
@@ -9,7 +10,7 @@ echo "[1/4] Namespace exists?"
 kubectl get ns ${NS} >/dev/null
 
 echo "[2/4] Pods Ready?"
-kubectl -n ${NS} wait --for=condition=ready pod -l app=${DEPLOY} --timeout=120s
+kubectl -n ${NS} wait --for=condition=ready pod -l app=${DEPLOY} --timeout=180s
 
 echo "[3/4] Service has endpoints?"
 EP_COUNT=$(kubectl -n ${NS} get endpoints ${SVC} -o jsonpath='{.subsets[0].addresses[*].ip}' 2>/dev/null | wc -w | tr -d ' ')

@@ -2,26 +2,18 @@ SHELL := /bin/bash
 PY := .venv/bin/python
 PIP := .venv/bin/pip
 KUBECTL := hack/kubectl-wrap.sh
+
 SEED ?= $(shell date +%s)
 DIFFICULTY ?= easy   # easy|medium|hard
 
-.PHONY: setup cluster delete-cluster challenge status hint verify reset clean cilium
-
-doctor:
-	@echo "Repo root: $$(pwd)"
-	@echo "Checking venv + PyYAML…"
-	@python3 -V
-	@test -d .venv || echo "NOTE: .venv missing (run: make setup)"
-	@.venv/bin/python -c "import yaml; print('PyYAML OK')" 2>/dev/null || echo "PyYAML missing (run: make setup)"
-	@echo "Files present?"
-	@ls -lah tools/ challenges/templates/ | sed 's/^/  /'
-	@echo "Rendered contents:"
-	@ls -lah challenges/rendered/ | sed 's/^/  /' || true
+.PHONY: setup init cluster delete-cluster challenge status hint verify brief reset clean teacher-answers
 
 setup:
 	test -d .venv || python3 -m venv .venv
 	$(PIP) install -U pip >/dev/null
 	$(PIP) install -r requirements.txt
+	@# ensure scripts are executable (macOS sometimes strips bits)
+	chmod +x hack/*.sh || true
 
 cluster:
 	bash hack/kind.sh up
@@ -29,7 +21,7 @@ cluster:
 delete-cluster:
 	bash hack/kind.sh down
 
-challenge: # generate + apply randomised challenge
+challenge: ## generate + apply randomised challenge
 	$(PY) tools/generate_challenge.py --seed $(SEED) --difficulty $(DIFFICULTY)
 	kubectl apply -f challenges/rendered/ns.yaml
 	kubectl apply -f challenges/rendered/pvc.yaml || true
@@ -39,12 +31,8 @@ challenge: # generate + apply randomised challenge
 
 status:
 	$(KUBECTL) -n kbox get pods,svc,ep
-	@echo; echo "Events (last 60s):"; \
+	@echo; echo "Recent events:"; \
 	$(KUBECTL) -n kbox get events --sort-by=.lastTimestamp | tail -n 50 || true
-
-brief:
-	@test -f challenges/rendered/BRIEF.md && cat challenges/rendered/BRIEF.md || \
-	( echo "No brief found. Run 'make challenge' first."; exit 1 )
 
 hint:
 	bash hack/hints.sh
@@ -52,20 +40,13 @@ hint:
 verify:
 	bash hack/verify.sh
 
+brief:
+	@test -f challenges/rendered/BRIEF.md && cat challenges/rendered/BRIEF.md || \
+	( echo "No brief found. Run 'make challenge' first."; exit 1 )
+
 reset:
 	-kubectl delete ns kbox --ignore-not-found
 	@rm -rf challenges/rendered/*
 
 clean: delete-cluster
 	@rm -rf challenges/rendered/*
-
-# Optional: Install Cilium (experimental). Requires cluster already up.
-cilium:
-	@echo "Installing Cilium via Helm..."
-	helm repo add cilium https://helm.cilium.io >/dev/null
-	helm repo update >/dev/null
-	helm upgrade --install cilium cilium/cilium \
-	  --namespace kube-system \
-	  --set hubble.enabled=true \
-	  --set hubble.relay.enabled=true \
-	  --set hubble.ui.enabled=true
