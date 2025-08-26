@@ -1,3 +1,5 @@
+![K8s in a Box](./images/image.png)
+
 # K8s in a Box
 
 Spin up a local Kubernetes (kind) cluster and get a **random broken app** to fix. No spoilers. Use your K8s, Linux, and networking skills to diagnose and repair.
@@ -121,3 +123,9 @@ kubectl replace --raw /api/v1/namespaces/kbox/finalize -f -
 I_AM_TEACHER=yes make answers SEED=424091 DIFFICULTY=medium
 cat .teacher/answers-424242.md
 ```
+
+## TODO
+
+- Make steps more clear for newbies.
+- Add more challenges.
+- Add more hints.
