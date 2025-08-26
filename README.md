@@ -7,7 +7,7 @@ Spin up a local Kubernetes (kind) cluster and get a **random broken app** to fix
 ## Prereqs
 
 - Docker
-- kind (`brew install kind` or see docs)
+- kind (`brew install kind` or `choco install kind`)
 - kubectl (`brew install kubernetes-cli`)
 - Python 3.9+
 
